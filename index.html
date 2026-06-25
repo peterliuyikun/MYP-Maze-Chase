@@ -808,10 +808,10 @@
 
         function handleCorrectAnswer() {
             state = 'TRANSITION';
-            score += 10 * (currentDifficulty === 'easy' ? 1 : currentDifficulty === 'medium' ? 2 : 3);
+            score += 10;
             scoreDisplay.innerText = score;
             
-            showFeedback("CORRECT!", `+${10 * (currentDifficulty === 'easy' ? 1 : currentDifficulty === 'medium' ? 2 : 3)} Points!`, 'text-green-400');
+            showFeedback("CORRECT!", "+10 Points!", 'text-green-400');
             
             setTimeout(() => {
                 hideFeedback();
