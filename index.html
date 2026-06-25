@@ -634,7 +634,23 @@
         }
 
         function isAtCenter(px, py) {
-            return px % TILE_SIZE === 0 && py % TILE_SIZE === 0;
+            // Use tolerance for smoother movement with dynamic tile sizes
+            const tolerance = Math.max(1, Math.floor(TILE_SIZE / 10));
+            const modX = Math.abs(px % TILE_SIZE);
+            const modY = Math.abs(py % TILE_SIZE);
+            return (modX <= tolerance || modX >= TILE_SIZE - tolerance) && 
+                   (modY <= tolerance || modY >= TILE_SIZE - tolerance);
+        }
+        
+        function snapToGrid(px, py) {
+            // Snap to nearest grid position when at center
+            if (isAtCenter(px, py)) {
+                return {
+                    x: Math.round(px / TILE_SIZE) * TILE_SIZE,
+                    y: Math.round(py / TILE_SIZE) * TILE_SIZE
+                };
+            }
+            return {x: px, y: py};
         }
 
         function shuffleArray(array) {
@@ -715,17 +731,26 @@
         function update() {
             if (state !== 'PLAYING') return;
 
-            // Player Movement
-            if (isAtCenter(player.x, player.y)) {
-                player.gridX = player.x / TILE_SIZE;
-                player.gridY = player.y / TILE_SIZE;
+            // Player Movement - improved for responsiveness
+            // Snap to grid when near center to prevent drift
+            const snapped = snapToGrid(player.x, player.y);
+            player.x = snapped.x;
+            player.y = snapped.y;
+            
+            player.gridX = Math.round(player.x / TILE_SIZE);
+            player.gridY = Math.round(player.y / TILE_SIZE);
 
-                if (player.nextDir.x !== 0 || player.nextDir.y !== 0) {
-                    if (!isWall(player.gridX + player.nextDir.x, player.gridY + player.nextDir.y)) {
-                        player.dir = { ...player.nextDir };
-                    }
+            // Try to change direction if nextDir is set
+            if (player.nextDir.x !== 0 || player.nextDir.y !== 0) {
+                // Check if we can turn in the desired direction
+                if (!isWall(player.gridX + player.nextDir.x, player.gridY + player.nextDir.y)) {
+                    player.dir = { ...player.nextDir };
+                    player.nextDir = {x: 0, y: 0};
                 }
-                
+            }
+            
+            // Stop if hitting a wall
+            if (player.dir.x !== 0 || player.dir.y !== 0) {
                 if (isWall(player.gridX + player.dir.x, player.gridY + player.dir.y)) {
                     player.dir = {x: 0, y: 0};
                 }
@@ -736,41 +761,45 @@
 
             // Ghost Movement
             ghosts.forEach(ghost => {
-                if (isAtCenter(ghost.x, ghost.y)) {
-                    ghost.gridX = ghost.x / TILE_SIZE;
-                    ghost.gridY = ghost.y / TILE_SIZE;
+                // Snap ghost to grid for cleaner movement
+                const ghostSnapped = snapToGrid(ghost.x, ghost.y);
+                ghost.x = ghostSnapped.x;
+                ghost.y = ghostSnapped.y;
+                
+                ghost.gridX = Math.round(ghost.x / TILE_SIZE);
+                ghost.gridY = Math.round(ghost.y / TILE_SIZE);
 
-                    let possibleMoves = [];
-                    const dirs = [{x:0,y:-1}, {x:1,y:0}, {x:0,y:1}, {x:-1,y:0}];
-                    
-                    dirs.forEach(d => {
-                        if (d.x === -ghost.dir.x && d.y === -ghost.dir.y && ghost.dir.x !== 0 && ghost.dir.y !== 0) return;
-                        if (!isWall(ghost.gridX + d.x, ghost.gridY + d.y)) {
-                            possibleMoves.push(d);
+                let possibleMoves = [];
+                const dirs = [{x:0,y:-1}, {x:1,y:0}, {x:0,y:1}, {x:-1,y:0}];
+                
+                dirs.forEach(d => {
+                    if (d.x === -ghost.dir.x && d.y === -ghost.dir.y && ghost.dir.x !== 0 && ghost.dir.y !== 0) return;
+                    if (!isWall(ghost.gridX + d.x, ghost.gridY + d.y)) {
+                        possibleMoves.push(d);
+                    }
+                });
+
+                if (possibleMoves.length === 0) {
+                    possibleMoves.push({x: -ghost.dir.x, y: -ghost.dir.y});
+                }
+
+                if (ghost.behavior === 'chase' && possibleMoves.length > 1) {
+                    let bestMove = possibleMoves[0];
+                    let minDist = Infinity;
+                    possibleMoves.forEach(m => {
+                        const nx = ghost.gridX + m.x;
+                        const ny = ghost.gridY + m.y;
+                        const dist = Math.abs(nx - (player.x/TILE_SIZE)) + Math.abs(ny - (player.y/TILE_SIZE));
+                        if (dist < minDist) {
+                            minDist = dist;
+                            bestMove = m;
                         }
                     });
-
-                    if (possibleMoves.length === 0) {
-                        possibleMoves.push({x: -ghost.dir.x, y: -ghost.dir.y});
-                    }
-
-                    if (ghost.behavior === 'chase' && possibleMoves.length > 1) {
-                        let bestMove = possibleMoves[0];
-                        let minDist = Infinity;
-                        possibleMoves.forEach(m => {
-                            const nx = ghost.gridX + m.x;
-                            const ny = ghost.gridY + m.y;
-                            const dist = Math.abs(nx - (player.x/TILE_SIZE)) + Math.abs(ny - (player.y/TILE_SIZE));
-                            if (dist < minDist) {
-                                minDist = dist;
-                                bestMove = m;
-                            }
-                        });
-                        ghost.dir = bestMove;
-                    } else {
-                        ghost.dir = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-                    }
+                    ghost.dir = bestMove;
+                } else {
+                    ghost.dir = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
                 }
+                
                 ghost.x += ghost.dir.x * ghost.speed;
                 ghost.y += ghost.dir.y * ghost.speed;
             });
