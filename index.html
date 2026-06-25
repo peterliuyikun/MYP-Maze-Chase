@@ -48,6 +48,7 @@
             align-items: center;
             text-align: center;
             z-index: 10;
+            overflow-y: auto;
         }
         .hidden {
             display: none !important;
@@ -87,10 +88,10 @@
         }
         .toggle-switch {
             position: relative;
-            width: 48px;
-            height: 24px;
+            width: 40px;
+            height: 20px;
             background-color: #475569;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             transition: background-color 0.3s;
         }
@@ -102,22 +103,23 @@
             position: absolute;
             top: 2px;
             left: 2px;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             background-color: white;
             border-radius: 50%;
             transition: transform 0.3s;
         }
         .toggle-switch.active::after {
-            transform: translateX(24px);
+            transform: translateX(20px);
         }
         .difficulty-btn {
-            padding: 8px 16px;
+            padding: 6px 12px;
             border: 2px solid;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
+            font-size: clamp(0.6rem, 1.8vw, 0.8rem);
         }
         .difficulty-btn.easy {
             border-color: #22c55e;
@@ -143,6 +145,30 @@
             background-color: #ef4444;
             color: white;
         }
+        .category-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background-color: rgba(30, 41, 59, 0.8);
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+        .category-label {
+            font-size: clamp(0.6rem, 1.8vw, 0.85rem);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .category-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
         /* Responsive text sizing */
         .responsive-title {
             font-size: clamp(0.75rem, 2.5vw, 1.25rem);
@@ -153,17 +179,22 @@
         .responsive-small {
             font-size: clamp(0.5rem, 1.5vw, 0.875rem);
         }
+        .settings-panel {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 10px;
+        }
     </style>
 </head>
 <body class="flex flex-col items-center py-2 px-2 md:py-4 md:px-4">
 
     <div class="w-full max-w-4xl flex justify-between items-center mb-2 md:mb-4 shrink-0">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 md:gap-3">
             <h1 class="responsive-title text-sky-400">MYP Maze Chase</h1>
-            <button id="settingsBtn" class="settings-btn responsive-small">⚙ Settings</button>
-            <button id="pauseBtn" class="settings-btn responsive-small hidden">⏸ Pause</button>
+            <button id="settingsBtn" class="settings-btn responsive-small">⚙</button>
+            <button id="pauseBtn" class="settings-btn responsive-small hidden">⏸</button>
         </div>
-        <div class="text-right arcade-font responsive-small text-yellow-300 flex space-x-4 md:space-x-6">
+        <div class="text-right arcade-font responsive-small text-yellow-300 flex space-x-3 md:space-x-6">
             <div>SCORE: <span id="scoreDisplay">0</span></div>
             <div>LIVES: <span id="livesDisplay">3</span></div>
         </div>
@@ -202,129 +233,250 @@
             
             <!-- Start/Game Over Overlay -->
             <div id="gameOverlay" class="overlay">
-                <h2 id="overlayTitle" class="arcade-font text-xl md:text-3xl text-yellow-400 mb-2 md:mb-4 tracking-wider">MAZE CHASE</h2>
-                
-                <!-- Difficulty Selection -->
-                <div class="mb-4">
-                    <p class="responsive-small text-slate-300 mb-2">Select Difficulty:</p>
-                    <div class="flex gap-2 justify-center">
-                        <button class="difficulty-btn easy active responsive-small" data-diff="easy">EASY</button>
-                        <button class="difficulty-btn medium responsive-small" data-diff="medium">MEDIUM</button>
-                        <button class="difficulty-btn hard responsive-small" data-diff="hard">HARD</button>
+                <div class="settings-panel w-full max-w-sm">
+                    <h2 id="overlayTitle" class="arcade-font text-lg md:text-2xl text-yellow-400 mb-2 tracking-wider">MAZE CHASE</h2>
+                    
+                    <!-- Difficulty Selection -->
+                    <div class="mb-3">
+                        <p class="responsive-small text-slate-300 mb-2">Difficulty:</p>
+                        <div class="flex gap-2 justify-center">
+                            <button class="difficulty-btn easy active" data-diff="easy">EASY</button>
+                            <button class="difficulty-btn medium" data-diff="medium">MEDIUM</button>
+                            <button class="difficulty-btn hard" data-diff="hard">HARD</button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Question Type Toggle -->
-                <div class="mb-4 flex items-center gap-3">
-                    <span class="responsive-small text-slate-300">Fun Questions:</span>
-                    <div class="toggle-switch" id="funQuestionsToggle"></div>
-                </div>
+                    <!-- Question Categories -->
+                    <div class="mb-3">
+                        <p class="responsive-small text-slate-300 mb-2">Question Categories:</p>
+                        <div class="bg-slate-800/50 rounded-lg p-2">
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-blue-500">📐</span>
+                                    Design & DT
+                                </span>
+                                <div class="toggle-switch active" data-category="design"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-green-500">🔬</span>
+                                    Science
+                                </span>
+                                <div class="toggle-switch active" data-category="science"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-purple-500">📊</span>
+                                    Math
+                                </span>
+                                <div class="toggle-switch active" data-category="math"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-pink-500">📚</span>
+                                    English & Lit
+                                </span>
+                                <div class="toggle-switch active" data-category="english"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-orange-500">🌍</span>
+                                    History & I&S
+                                </span>
+                                <div class="toggle-switch active" data-category="history"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-red-500">🎮</span>
+                                    Gaming & Fun
+                                </span>
+                                <div class="toggle-switch" data-category="fun"></div>
+                            </div>
+                        </div>
+                    </div>
 
-                <p id="overlayMessage" class="responsive-small mb-4 md:mb-6 px-4">Use Arrow Keys or Swipe to move.<br>Find the correct answer block!<br>Watch out for wandering teachers!</p>
-                <button id="startBtn" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
-                    START GAME
-                </button>
+                    <p id="overlayMessage" class="responsive-small mb-3 px-2">Use Arrow Keys or Swipe to move.<br>Find the correct answer block!</p>
+                    <button id="startBtn" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
+                        START GAME
+                    </button>
+                </div>
             </div>
 
             <!-- Settings Overlay -->
             <div id="settingsOverlay" class="overlay hidden">
-                <h2 class="arcade-font text-xl md:text-2xl text-sky-400 mb-4">SETTINGS</h2>
-                
-                <div class="mb-4">
-                    <p class="responsive-small text-slate-300 mb-2">Difficulty:</p>
-                    <div class="flex gap-2 justify-center">
-                        <button class="difficulty-btn easy responsive-small" data-diff="easy">EASY</button>
-                        <button class="difficulty-btn medium responsive-small" data-diff="medium">MEDIUM</button>
-                        <button class="difficulty-btn hard responsive-small" data-diff="hard">HARD</button>
+                <div class="settings-panel w-full max-w-sm">
+                    <h2 class="arcade-font text-lg md:text-xl text-sky-400 mb-3">SETTINGS</h2>
+                    
+                    <div class="mb-3">
+                        <p class="responsive-small text-slate-300 mb-2">Difficulty:</p>
+                        <div class="flex gap-2 justify-center">
+                            <button class="difficulty-btn easy" data-diff="easy">EASY</button>
+                            <button class="difficulty-btn medium" data-diff="medium">MEDIUM</button>
+                            <button class="difficulty-btn hard" data-diff="hard">HARD</button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-4 flex items-center gap-3">
-                    <span class="responsive-small text-slate-300">Fun Questions:</span>
-                    <div class="toggle-switch" id="settingsFunToggle"></div>
-                </div>
+                    <div class="mb-3">
+                        <p class="responsive-small text-slate-300 mb-2">Categories:</p>
+                        <div class="bg-slate-800/50 rounded-lg p-2">
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-blue-500">📐</span>
+                                    Design & DT
+                                </span>
+                                <div class="toggle-switch" data-category="design"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-green-500">🔬</span>
+                                    Science
+                                </span>
+                                <div class="toggle-switch" data-category="science"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-purple-500">📊</span>
+                                    Math
+                                </span>
+                                <div class="toggle-switch" data-category="math"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-pink-500">📚</span>
+                                    English & Lit
+                                </span>
+                                <div class="toggle-switch" data-category="english"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-orange-500">🌍</span>
+                                    History & I&S
+                                </span>
+                                <div class="toggle-switch" data-category="history"></div>
+                            </div>
+                            <div class="category-toggle">
+                                <span class="category-label text-white">
+                                    <span class="category-icon bg-red-500">🎮</span>
+                                    Gaming & Fun
+                                </span>
+                                <div class="toggle-switch" data-category="fun"></div>
+                            </div>
+                        </div>
+                    </div>
 
-                <button id="closeSettingsBtn" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs mt-4">
-                    CLOSE
-                </button>
+                    <button id="closeSettingsBtn" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
+                        CLOSE
+                    </button>
+                </div>
             </div>
 
             <!-- Pause Overlay -->
             <div id="pauseOverlay" class="overlay hidden">
-                <h2 class="arcade-font text-2xl md:text-3xl text-yellow-400 mb-4">PAUSED</h2>
-                <p class="responsive-small mb-4 text-slate-300">Press P or click Resume to continue</p>
-                <button id="resumeBtn" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
+                <h2 class="arcade-font text-xl md:text-2xl text-yellow-400 mb-3">PAUSED</h2>
+                <p class="responsive-small mb-3 text-slate-300">Press P or click Resume</p>
+                <button id="resumeBtn" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
                     RESUME
                 </button>
             </div>
 
-            <!-- Feedback Overlay (Correct/Wrong) -->
+            <!-- Feedback Overlay -->
             <div id="feedbackOverlay" class="overlay hidden bg-opacity-70">
-                <h2 id="feedbackText" class="arcade-font text-2xl md:text-3xl mb-2"></h2>
-                <p id="feedbackSubtext" class="responsive-text font-semibold"></p>
+                <h2 id="feedbackText" class="arcade-font text-xl md:text-2xl mb-2"></h2>
+                <p id="feedbackSubtext" class="responsive-small font-semibold"></p>
             </div>
         </div>
 
         <!-- Mobile Controls -->
-        <div class="grid grid-cols-3 gap-2 w-40 md:w-48 mx-auto lg:hidden">
+        <div class="grid grid-cols-3 gap-2 w-36 md:w-48 mx-auto lg:hidden">
             <div></div>
-            <button class="dpad-btn h-12 md:h-14" id="btnUp">↑</button>
+            <button class="dpad-btn h-10 md:h-14" id="btnUp">↑</button>
             <div></div>
-            <button class="dpad-btn h-12 md:h-14" id="btnLeft">←</button>
-            <button class="dpad-btn h-12 md:h-14" id="btnDown">↓</button>
-            <button class="dpad-btn h-12 md:h-14" id="btnRight">→</button>
+            <button class="dpad-btn h-10 md:h-14" id="btnLeft">←</button>
+            <button class="dpad-btn h-10 md:h-14" id="btnDown">↓</button>
+            <button class="dpad-btn h-10 md:h-14" id="btnRight">→</button>
         </div>
 
     </div>
 
     <script>
-        // --- DATA: Questions Library ---
-        const allQuestions = {
-            myp: [
-                // Design / DT
+        // --- DATA: Questions by Category ---
+        const questionBank = {
+            design: [
                 { q: "What is the very first stage of the MYP Design Cycle?", a: "Inquiring & Analyzing", options: ["Developing Ideas", "Creating the Solution", "Evaluating"] },
                 { q: "Which hand tool is best used to safely cut a straight line in wood?", a: "Tenon Saw", options: ["Coping Saw", "Hammer", "Screwdriver"] },
                 { q: "In Digital Design, what does 'CAD' stand for?", a: "Computer-Aided Design", options: ["Central Art Drawing", "Computer And Data", "Creative Art Design"] },
-                { q: "During the 'Evaluating' phase of Design, what must you test your product against?", a: "Design Specification", options: ["Your friend's opinion", "The teacher's grade", "A random guess"] },
-                { q: "Which of the following materials is a thermoplastic?", a: "Acrylic", options: ["Wood", "Cardboard", "Concrete"] },
-                { q: "What is the name of a machine that builds 3D models layer by layer?", a: "3D Printer", options: ["Laser Cutter", "Vacuum Former", "Band Saw"] },
-                { q: "Which wood joint involves cutting interlocking 'fingers'?", a: "Finger Joint", options: ["Butt Joint", "Dovetail Joint", "Mitre Joint"] },
-                { q: "What does 'CAM' stand for in manufacturing?", a: "Computer-Aided Manufacturing", options: ["Central Auto Machine", "Core Art Maker", "Computer And Math"] },
-                { q: "In the Design Cycle, what step follows 'Inquiring & Analyzing'?", a: "Developing Ideas", options: ["Creating the Solution", "Evaluating", "Testing"] },
-                { q: "Which is a fundamental safety rule in the workshop?", a: "Wear safety goggles", options: ["Run to your desk", "Leave machines running", "Eat while cutting"] },
-                { q: "What type of manufactured board is made by gluing thin layers of wood?", a: "Plywood", options: ["MDF", "Pine", "Oak"] },
-                { q: "What is a 'prototype' in the design process?", a: "A working model", options: ["A final product", "A sketch", "A type of plastic"] },
-                { q: "Which of these materials is an excellent conductor of electricity?", a: "Copper", options: ["Plastic", "Wood", "Rubber"] },
-                { q: "What is the main purpose of a 'Design Brief'?", a: "State the problem to solve", options: ["List the final cost", "Draw the product", "Evaluate the design"] },
-                { q: "MDF is a common workshop material. What does it stand for?", a: "Medium Density Fibreboard", options: ["Multi-Design Format", "Modern Durable Fabric", "Mega Dense Foam"] },
-                // MYP Subjects
-                { q: "(Science) What part of an animal cell is known as the 'powerhouse'?", a: "Mitochondria", options: ["Nucleus", "Cell Wall", "Cytoplasm"] },
-                { q: "(Math) If a rectangle has length 6cm and width 4cm, what is its area?", a: "24 cm²", options: ["10 cm²", "20 cm²", "12 cm²"] },
-                { q: "(Lang&Lit) 'The stars danced playfully' is an example of...", a: "Personification", options: ["Simile", "Metaphor", "Onomatopoeia"] },
-                { q: "(I&S) Which imaginary lines run horizontally across a world map?", a: "Latitude", options: ["Longitude", "Equator only", "Meridians"] },
-                { q: "(Science) What state of matter has fixed volume but takes container shape?", a: "Liquid", options: ["Solid", "Gas", "Plasma"] },
-                { q: "(Math) Solve for x: 2x + 5 = 15", a: "5", options: ["10", "4", "20"] },
-                { q: "(Math) What is the next prime number after 7?", a: "11", options: ["9", "8", "13"] },
-                { q: "(Science) What gas do plants absorb during photosynthesis?", a: "Carbon Dioxide", options: ["Oxygen", "Nitrogen", "Hydrogen"] },
-                { q: "(Science) What is the chemical formula for water?", a: "H2O", options: ["CO2", "O2", "NaCl"] },
-                { q: "(Lang&Lit) What is the term for a word that sounds like its meaning?", a: "Onomatopoeia", options: ["Simile", "Metaphor", "Alliteration"] },
-                { q: "(I&S) Which ancient civilization is famous for building the pyramids?", a: "Egyptians", options: ["Romans", "Greeks", "Mayans"] },
-                { q: "(I&S) What is the capital city of Australia?", a: "Canberra", options: ["Sydney", "Melbourne", "Perth"] },
-                { q: "(PHE) In standard basketball, how many points is a free throw worth?", a: "1", options: ["2", "3", "0"] },
-                { q: "(Music) How many strings does a standard acoustic guitar have?", a: "6", options: ["4", "5", "7"] },
-                { q: "(Art) Which of the following are the primary colors?", a: "Red, Blue, Yellow", options: ["Green, Orange, Purple", "Black, White, Grey", "Red, Green, Blue"] }
+                { q: "During the 'Evaluating' phase, what must you test your product against?", a: "Design Specification", options: ["Your friend's opinion", "The teacher's grade", "A random guess"] },
+                { q: "Which material is a thermoplastic?", a: "Acrylic", options: ["Wood", "Cardboard", "Concrete"] },
+                { q: "What machine builds 3D models layer by layer?", a: "3D Printer", options: ["Laser Cutter", "Vacuum Former", "Band Saw"] },
+                { q: "Which wood joint involves interlocking 'fingers'?", a: "Finger Joint", options: ["Butt Joint", "Dovetail Joint", "Mitre Joint"] },
+                { q: "What does 'CAM' stand for?", a: "Computer-Aided Manufacturing", options: ["Central Auto Machine", "Core Art Maker", "Computer And Math"] },
+                { q: "What step follows 'Inquiring & Analyzing'?", a: "Developing Ideas", options: ["Creating the Solution", "Evaluating", "Testing"] },
+                { q: "Which is a fundamental workshop safety rule?", a: "Wear safety goggles", options: ["Run to your desk", "Leave machines running", "Eat while cutting"] },
+                { q: "What board is made by gluing thin wood layers?", a: "Plywood", options: ["MDF", "Pine", "Oak"] },
+                { q: "What is a 'prototype'?", a: "A working model", options: ["A final product", "A sketch", "A type of plastic"] },
+                { q: "Which material conducts electricity well?", a: "Copper", options: ["Plastic", "Wood", "Rubber"] },
+                { q: "What is the purpose of a 'Design Brief'?", a: "State the problem to solve", options: ["List the final cost", "Draw the product", "Evaluate the design"] },
+                { q: "What does MDF stand for?", a: "Medium Density Fibreboard", options: ["Multi-Design Format", "Modern Durable Fabric", "Mega Dense Foam"] }
+            ],
+            science: [
+                { q: "What part of a cell is the 'powerhouse'?", a: "Mitochondria", options: ["Nucleus", "Cell Wall", "Cytoplasm"] },
+                { q: "What state of matter has fixed volume but takes container shape?", a: "Liquid", options: ["Solid", "Gas", "Plasma"] },
+                { q: "What gas do plants absorb during photosynthesis?", a: "Carbon Dioxide", options: ["Oxygen", "Nitrogen", "Hydrogen"] },
+                { q: "What is the chemical formula for water?", a: "H2O", options: ["CO2", "O2", "NaCl"] },
+                { q: "What planet is known as the Red Planet?", a: "Mars", options: ["Venus", "Jupiter", "Saturn"] },
+                { q: "What is the speed of light approximately?", a: "300,000 km/s", options: ["150,000 km/s", "500,000 km/s", "1,000,000 km/s"] },
+                { q: "What is the largest organ in the human body?", a: "Skin", options: ["Liver", "Heart", "Brain"] },
+                { q: "What type of blood cells fight infections?", a: "White blood cells", options: ["Red blood cells", "Platelets", "Plasma"] },
+                { q: "What is the boiling point of water at sea level?", a: "100°C", options: ["90°C", "110°C", "120°C"] },
+                { q: "What force keeps planets in orbit around the sun?", a: "Gravity", options: ["Magnetism", "Friction", "Electricity"] }
+            ],
+            math: [
+                { q: "Rectangle length 6cm, width 4cm. What is area?", a: "24 cm²", options: ["10 cm²", "20 cm²", "12 cm²"] },
+                { q: "Solve for x: 2x + 5 = 15", a: "5", options: ["10", "4", "20"] },
+                { q: "What is the next prime number after 7?", a: "11", options: ["9", "8", "13"] },
+                { q: "What is the square root of 144?", a: "12", options: ["10", "14", "16"] },
+                { q: "What is 25% of 200?", a: "50", options: ["25", "75", "100"] },
+                { q: "What is the value of Pi (π) approximately?", a: "3.14", options: ["2.71", "1.62", "3.41"] },
+                { q: "What is the perimeter of a square with side 5?", a: "20", options: ["10", "15", "25"] },
+                { q: "What is 3³ (3 cubed)?", a: "27", options: ["9", "18", "81"] },
+                { q: "What angle is a right angle?", a: "90°", options: ["45°", "180°", "360°"] },
+                { q: "What is the sum of angles in a triangle?", a: "180°", options: ["90°", "270°", "360°"] }
+            ],
+            english: [
+                { q: "'The stars danced playfully' is an example of...", a: "Personification", options: ["Simile", "Metaphor", "Onomatopoeia"] },
+                { q: "What is a word that sounds like its meaning?", a: "Onomatopoeia", options: ["Simile", "Metaphor", "Alliteration"] },
+                { q: "What is the main character of a story called?", a: "Protagonist", options: ["Antagonist", "Narrator", "Supporting character"] },
+                { q: "What is a comparison using 'like' or 'as'?", a: "Simile", options: ["Metaphor", "Personification", "Hyperbole"] },
+                { q: "What is the past tense of 'run'?", a: "Ran", options: ["Runned", "Running", "Runs"] },
+                { q: "What is a group of words without a verb?", a: "Phrase", options: ["Clause", "Sentence", "Paragraph"] },
+                { q: "What is the opposite of 'antonym'?", a: "Synonym", options: ["Homonym", "Acronym", "Homophone"] },
+                { q: "What punctuation ends a question?", a: "Question mark", options: ["Exclamation mark", "Period", "Comma"] },
+                { q: "What is a story about someone's life written by them?", a: "Autobiography", options: ["Biography", "Memoir", "Fiction"] },
+                { q: "What is the correct spelling?", a: "Necessary", options: ["Neccessary", "Necesary", "Necessery"] }
+            ],
+            history: [
+                { q: "Which civilization built the pyramids?", a: "Egyptians", options: ["Romans", "Greeks", "Mayans"] },
+                { q: "What is the capital of Australia?", a: "Canberra", options: ["Sydney", "Melbourne", "Perth"] },
+                { q: "Who was the first US President?", a: "George Washington", options: ["Thomas Jefferson", "Abraham Lincoln", "John Adams"] },
+                { q: "In which year did WWII end?", a: "1945", options: ["1939", "1944", "1950"] },
+                { q: "What ancient wonder was in Alexandria?", a: "Lighthouse", options: ["Colossus", "Hanging Gardens", "Temple of Artemis"] },
+                { q: "Who painted the Mona Lisa?", a: "Leonardo da Vinci", options: ["Michelangelo", "Raphael", "Donatello"] },
+                { q: "What was the name of the ship that brought pilgrims to America?", a: "Mayflower", options: ["Santa Maria", "Beagle", "Titanic"] },
+                { q: "Which empire built the Colosseum?", a: "Roman Empire", options: ["Greek Empire", "Ottoman Empire", "British Empire"] },
+                { q: "Who wrote 'Romeo and Juliet'?", a: "William Shakespeare", options: ["Charles Dickens", "Jane Austen", "Mark Twain"] },
+                { q: "What year did Hong Kong become a SAR?", a: "1997", options: ["1984", "1999", "2000"] }
             ],
             fun: [
-                { q: "Which iconic, green, exploding mob is famously found in Minecraft?", a: "Creeper", options: ["Zombie", "Enderman", "Skeleton"] },
-                { q: "What historic green and white transport ferries people across Victoria Harbour?", a: "Star Ferry", options: ["MTR", "Peak Tram", "Ding Ding (Tram)"] },
-                { q: "What is the traditional Cantonese style of bite-sized food in steamer baskets?", a: "Dim Sum", options: ["Sushi", "Pho", "Curry Fishballs"] },
-                { q: "What is the name of the highest mountain peak in Hong Kong?", a: "Tai Mo Shan", options: ["Victoria Peak", "Lantau Peak", "Lion Rock"] },
-                { q: "In Pokémon, what elemental type is Pikachu?", a: "Electric", options: ["Fire", "Water", "Grass"] },
-                { q: "What is the popular HK dessert made of sweet egg mixture in pastry crust?", a: "Egg Tart", options: ["Pineapple Bun", "Waffle", "Mooncake"] },
-                { q: "Which video game company created the Switch console?", a: "Nintendo", options: ["Sony", "Microsoft", "Sega"] },
+                { q: "Which green mob explodes in Minecraft?", a: "Creeper", options: ["Zombie", "Enderman", "Skeleton"] },
+                { q: "What ferry crosses Victoria Harbour?", a: "Star Ferry", options: ["MTR", "Peak Tram", "Ding Ding"] },
+                { q: "What is Cantonese bite-sized food in baskets?", a: "Dim Sum", options: ["Sushi", "Pho", "Curry Fishballs"] },
+                { q: "What is Hong Kong's highest peak?", a: "Tai Mo Shan", options: ["Victoria Peak", "Lantau Peak", "Lion Rock"] },
+                { q: "What type is Pikachu?", a: "Electric", options: ["Fire", "Water", "Grass"] },
+                { q: "What is the popular HK egg dessert?", a: "Egg Tart", options: ["Pineapple Bun", "Waffle", "Mooncake"] },
+                { q: "Who made the Switch console?", a: "Nintendo", options: ["Sony", "Microsoft", "Sega"] },
                 { q: "What color is the MTR Island Line?", a: "Blue", options: ["Red", "Green", "Orange"] },
-                { q: "What popular superhero is often known as the 'Caped Crusader'?", a: "Batman", options: ["Superman", "Spider-Man", "Iron Man"] },
-                { q: "Which block is virtually unbreakable in standard Minecraft survival?", a: "Bedrock", options: ["Obsidian", "Diamond Block", "Crying Obsidian"] }
+                { q: "Who is the 'Caped Crusader'?", a: "Batman", options: ["Superman", "Spider-Man", "Iron Man"] },
+                { q: "What block is unbreakable in Minecraft?", a: "Bedrock", options: ["Obsidian", "Diamond Block", "Crying Obsidian"] }
             ]
         };
 
@@ -337,7 +489,14 @@
         
         // Settings
         let currentDifficulty = 'easy';
-        let funQuestionsEnabled = false;
+        let enabledCategories = {
+            design: true,
+            science: true,
+            math: true,
+            english: true,
+            history: true,
+            fun: false
+        };
         let questionsPool = [];
         
         // Difficulty settings
@@ -487,9 +646,21 @@
         }
 
         function buildQuestionsPool() {
-            questionsPool = [...allQuestions.myp];
-            if (funQuestionsEnabled) {
-                questionsPool = questionsPool.concat(allQuestions.fun);
+            questionsPool = [];
+            for (let category in enabledCategories) {
+                if (enabledCategories[category]) {
+                    questionsPool = questionsPool.concat(questionBank[category]);
+                }
+            }
+            // If no categories selected, use all academic ones
+            if (questionsPool.length === 0) {
+                questionsPool = [
+                    ...questionBank.design,
+                    ...questionBank.science,
+                    ...questionBank.math,
+                    ...questionBank.english,
+                    ...questionBank.history
+                ];
             }
             shuffleArray(questionsPool);
         }
@@ -677,9 +848,9 @@
 
         function showFeedback(title, sub, colorClass) {
             feedbackText.innerText = title;
-            feedbackText.className = `arcade-font text-2xl md:text-3xl mb-2 ${colorClass}`;
+            feedbackText.className = `arcade-font text-xl md:text-2xl mb-2 ${colorClass}`;
             feedbackSubtext.innerText = sub;
-            feedbackSubtext.className = `responsive-text font-semibold text-white`;
+            feedbackSubtext.className = `responsive-small font-semibold text-white`;
             feedbackOverlay.classList.remove('hidden');
             feedbackOverlay.classList.add('flex');
         }
@@ -893,20 +1064,34 @@
             });
         });
 
-        // Toggle Switches
-        function toggleFunQuestions() {
-            funQuestionsEnabled = !funQuestionsEnabled;
-            document.getElementById('funQuestionsToggle').classList.toggle('active', funQuestionsEnabled);
-            document.getElementById('settingsFunToggle').classList.toggle('active', funQuestionsEnabled);
+        // Category Toggles
+        function updateCategoryToggle(toggle) {
+            const category = toggle.dataset.category;
+            enabledCategories[category] = toggle.classList.contains('active');
         }
 
-        document.getElementById('funQuestionsToggle').addEventListener('click', toggleFunQuestions);
-        document.getElementById('settingsFunToggle').addEventListener('click', toggleFunQuestions);
+        document.querySelectorAll('.toggle-switch[data-category]').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+                updateCategoryToggle(toggle);
+            });
+        });
 
         // Settings Button
         settingsBtn.addEventListener('click', () => {
             settingsOverlay.classList.remove('hidden');
             settingsOverlay.classList.add('flex');
+            
+            // Sync toggles with current state
+            document.querySelectorAll('#settingsOverlay .toggle-switch[data-category]').forEach(toggle => {
+                const category = toggle.dataset.category;
+                toggle.classList.toggle('active', enabledCategories[category]);
+            });
+            
+            // Sync difficulty
+            document.querySelectorAll('#settingsOverlay .difficulty-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.diff === currentDifficulty);
+            });
         });
 
         document.getElementById('closeSettingsBtn').addEventListener('click', () => {
