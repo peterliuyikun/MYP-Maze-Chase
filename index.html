@@ -634,7 +634,10 @@
         }
 
         function isAtCenter(px, py) {
-            return px % TILE_SIZE === 0 && py % TILE_SIZE === 0;
+            // Use Math.round to handle floating point issues with dynamic tile sizes
+            const modX = Math.round(px % TILE_SIZE);
+            const modY = Math.round(py % TILE_SIZE);
+            return modX === 0 && modY === 0;
         }
 
         function shuffleArray(array) {
@@ -731,8 +734,21 @@
                 }
             }
 
-            player.x += player.dir.x * player.speed;
-            player.y += player.dir.y * player.speed;
+            // Calculate next position
+            let nextX = player.x + player.dir.x * player.speed;
+            let nextY = player.y + player.dir.y * player.speed;
+            
+            // Check wall collision before moving
+            const nextGridX = Math.floor((nextX + TILE_SIZE/2) / TILE_SIZE);
+            const nextGridY = Math.floor((nextY + TILE_SIZE/2) / TILE_SIZE);
+            
+            if (!isWall(nextGridX, nextGridY)) {
+                player.x = nextX;
+                player.y = nextY;
+            } else {
+                // Stop at tile boundary
+                player.dir = {x: 0, y: 0};
+            }
 
             // --- Ghost Movement ---
             ghosts.forEach(ghost => {
