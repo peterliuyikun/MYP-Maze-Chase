@@ -1105,6 +1105,13 @@
 
         // Start Game
         document.getElementById('startBtn').addEventListener('click', () => {
+            // Check if at least one category is enabled
+            const anyCategoryEnabled = Object.values(enabledCategories).some(v => v);
+            if (!anyCategoryEnabled) {
+                alert("Please enable at least one question category!");
+                return;
+            }
+            
             const settings = difficultySettings[currentDifficulty];
             
             score = 0;
