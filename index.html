@@ -734,8 +734,30 @@
                 }
             }
 
-            player.x += player.dir.x * player.speed;
-            player.y += player.dir.y * player.speed;
+            // Move player but check for wall collision
+            if (player.dir.x !== 0 || player.dir.y !== 0) {
+                const nextX = player.x + player.dir.x * player.speed;
+                const nextY = player.y + player.dir.y * player.speed;
+                
+                // Calculate which tile the center of player will be in after moving
+                const centerNextX = nextX + TILE_SIZE / 2;
+                const centerNextY = nextY + TILE_SIZE / 2;
+                const nextGridX = Math.floor(centerNextX / TILE_SIZE);
+                const nextGridY = Math.floor(centerNextY / TILE_SIZE);
+                
+                // Only move if the next position is not a wall
+                if (!isWall(nextGridX, nextGridY)) {
+                    player.x = nextX;
+                    player.y = nextY;
+                } else {
+                    // Stop at tile boundary
+                    if (player.dir.x > 0) player.x = (nextGridX * TILE_SIZE) - TILE_SIZE;
+                    else if (player.dir.x < 0) player.x = ((nextGridX + 1) * TILE_SIZE);
+                    if (player.dir.y > 0) player.y = (nextGridY * TILE_SIZE) - TILE_SIZE;
+                    else if (player.dir.y < 0) player.y = ((nextGridY + 1) * TILE_SIZE);
+                    player.dir = {x: 0, y: 0};
+                }
+            }
 
             // --- Ghost Movement ---
             ghosts.forEach(ghost => {
