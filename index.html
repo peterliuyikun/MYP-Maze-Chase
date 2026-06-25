@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MYP Maze Chase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: white;
+            overscroll-behavior: none;
+            touch-action: none;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1, .arcade-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: min(570px, 95vw);
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .option-card {
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .option-card:active {
+            transform: scale(0.98);
+        }
+        .dpad-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            cursor: pointer;
+        }
+        .dpad-btn:active {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        /* Responsive text sizing */
+        .responsive-title {
+            font-size: clamp(0.75rem, 2.5vw, 1.25rem);
+        }
+        .responsive-text {
+            font-size: clamp(0.65rem, 2vw, 1rem);
+        }
+        .responsive-small {
+            font-size: clamp(0.5rem, 1.5vw, 0.875rem);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center py-2 px-2 md:py-4 md:px-4">
+
+    <div class="w-full max-w-4xl flex justify-between items-center mb-2 md:mb-4 shrink-0">
+        <div>
+            <h1 class="responsive-title text-sky-400">MYP Maze Chase</h1>
+            <p class="responsive-small text-slate-400 hidden md:block">Collect the right answer, avoid the ghosts!</p>
+        </div>
+        <div class="text-right arcade-font responsive-small text-yellow-300 flex space-x-4 md:space-x-6">
+            <div>SCORE: <span id="scoreDisplay">0</span></div>
+            <div>LIVES: <span id="livesDisplay">3</span></div>
+        </div>
+    </div>
+
+    <!-- Question Box -->
+    <div class="w-full max-w-4xl bg-slate-800 border-2 border-sky-500 rounded-xl p-2 md:p-4 mb-2 md:mb-4 shadow-lg text-center min-h-[60px] md:min-h-[80px] flex items-center justify-center shrink-0">
+        <h2 id="questionText" class="responsive-text font-semibold text-white">Press Start to Begin!</h2>
+    </div>
+
+    <!-- Options Grid -->
+    <div class="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-2 md:mb-4 shrink-0">
+        <div class="option-card bg-red-600/80 border-2 border-red-400 rounded-lg p-2 text-center flex items-center shadow-md">
+            <span class="arcade-font text-xs mr-2 text-white bg-black/30 px-2 py-1 rounded">A</span>
+            <span id="optA" class="responsive-small font-semibold flex-1">...</span>
+        </div>
+        <div class="option-card bg-blue-600/80 border-2 border-blue-400 rounded-lg p-2 text-center flex items-center shadow-md">
+            <span class="arcade-font text-xs mr-2 text-white bg-black/30 px-2 py-1 rounded">B</span>
+            <span id="optB" class="responsive-small font-semibold flex-1">...</span>
+        </div>
+        <div class="option-card bg-green-600/80 border-2 border-green-400 rounded-lg p-2 text-center flex items-center shadow-md">
+            <span class="arcade-font text-xs mr-2 text-white bg-black/30 px-2 py-1 rounded">C</span>
+            <span id="optC" class="responsive-small font-semibold flex-1">...</span>
+        </div>
+        <div class="option-card bg-yellow-500/80 border-2 border-yellow-300 rounded-lg p-2 text-center flex items-center shadow-md text-slate-900">
+            <span class="arcade-font text-xs mr-2 text-slate-900 bg-white/40 px-2 py-1 rounded">D</span>
+            <span id="optD" class="responsive-small font-semibold flex-1">...</span>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="flex-1 w-full flex flex-col lg:flex-row justify-center items-center gap-4 min-h-0">
+        
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- Start/Game Over Overlay -->
+            <div id="gameOverlay" class="overlay">
+                <h2 id="overlayTitle" class="arcade-font text-xl md:text-3xl text-yellow-400 mb-2 md:mb-4 tracking-wider">MAZE CHASE</h2>
+                <p id="overlayMessage" class="responsive-small mb-4 md:mb-6 px-4">Use Arrow Keys or Swipe to move.<br>Find the correct answer block!<br>Watch out for wandering teachers!</p>
+                <button id="startBtn" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
+                    START GAME
+                </button>
+            </div>
+
+            <!-- Feedback Overlay (Correct/Wrong) -->
+            <div id="feedbackOverlay" class="overlay hidden bg-opacity-70">
+                <h2 id="feedbackText" class="arcade-font text-2xl md:text-3xl mb-2"></h2>
+                <p id="feedbackSubtext" class="responsive-text font-semibold"></p>
+            </div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div class="grid grid-cols-3 gap-2 w-40 md:w-48 mx-auto lg:hidden">
+            <div></div>
+            <button class="dpad-btn h-12 md:h-14" id="btnUp">↑</button>
+            <div></div>
+            <button class="dpad-btn h-12 md:h-14" id="btnLeft">←</button>
+            <button class="dpad-btn h-12 md:h-14" id="btnDown">↓</button>
+            <button class="dpad-btn h-12 md:h-14" id="btnRight">→</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA: Questions Library (Expanded to 40 questions) ---
+        const questionsPool = [
+            // Design / DT
+            { q: "What is the very first stage of the MYP Design Cycle?", a: "Inquiring & Analyzing", options: ["Developing Ideas", "Creating the Solution", "Evaluating"] },
+            { q: "Which hand tool is best used to safely cut a straight line in wood?", a: "Tenon Saw", options: ["Coping Saw", "Hammer", "Screwdriver"] },
+            { q: "In Digital Design, what does 'CAD' stand for?", a: "Computer-Aided Design", options: ["Central Art Drawing", "Computer And Data", "Creative Art Design"] },
+            { q: "During the 'Evaluating' phase of Design, what must you test your product against?", a: "Design Specification", options: ["Your friend's opinion", "The teacher's grade", "A random guess"] },
+            { q: "Which of the following materials is a thermoplastic (can be reheated and reshaped)?", a: "Acrylic", options: ["Wood", "Cardboard", "Concrete"] },
+            { q: "What is the name of a machine that builds 3D models layer by layer from a CAD file?", a: "3D Printer", options: ["Laser Cutter", "Vacuum Former", "Band Saw"] },
+            { q: "Which wood joint involves cutting interlocking 'fingers'?", a: "Finger Joint", options: ["Butt Joint", "Dovetail Joint", "Mitre Joint"] },
+            { q: "What does 'CAM' stand for in manufacturing?", a: "Computer-Aided Manufacturing", options: ["Central Auto Machine", "Core Art Maker", "Computer And Math"] },
+            { q: "In the Design Cycle, what step follows 'Inquiring & Analyzing'?", a: "Developing Ideas", options: ["Creating the Solution", "Evaluating", "Testing"] },
+            { q: "Which is a fundamental safety rule in the workshop?", a: "Wear safety goggles", options: ["Run to your desk", "Leave machines running", "Eat while cutting"] },
+            { q: "What type of manufactured board is made by gluing thin layers of wood together?", a: "Plywood", options: ["MDF", "Pine", "Oak"] },
+            { q: "What is a 'prototype' in the design process?", a: "A working model", options: ["A final product", "A sketch", "A type of plastic"] },
+            { q: "Which of these materials is an excellent conductor of electricity?", a: "Copper", options: ["Plastic", "Wood", "Rubber"] },
+            { q: "What is the main purpose of a 'Design Brief'?", a: "State the problem to solve", options: ["List the final cost", "Draw the product", "Evaluate the design"] },
+            { q: "MDF is a common workshop material. What does it stand for?", a: "Medium Density Fibreboard", options: ["Multi-Design Format", "Modern Durable Fabric", "Mega Dense Foam"] },
+            
+            // MYP Subjects
+            { q: "(Science) What part of an animal cell is known as the 'powerhouse'?", a: "Mitochondria", options: ["Nucleus", "Cell Wall", "Cytoplasm"] },
+            { q: "(Math) If a rectangle has a length of 6cm and a width of 4cm, what is its area?", a: "24 cm²", options: ["10 cm²", "20 cm²", "12 cm²"] },
+            { q: "(Lang&Lit) 'The stars danced playfully in the moonlit sky' is an example of...", a: "Personification", options: ["Simile", "Metaphor", "Onomatopoeia"] },
+            { q: "(I&S) Which imaginary lines run horizontally across a world map?", a: "Latitude", options: ["Longitude", "Equator only", "Meridians"] },
+            { q: "(Science) What state of matter has a fixed volume but takes the shape of its container?", a: "Liquid", options: ["Solid", "Gas", "Plasma"] },
+            { q: "(Math) Solve for x:  2x + 5 = 15", a: "5", options: ["10", "4", "20"] },
+            { q: "(Math) What is the next prime number after 7?", a: "11", options: ["9", "8", "13"] },
+            { q: "(Science) What gas do plants absorb during photosynthesis?", a: "Carbon Dioxide", options: ["Oxygen", "Nitrogen", "Hydrogen"] },
+            { q: "(Science) What is the chemical formula for water?", a: "H2O", options: ["CO2", "O2", "NaCl"] },
+            { q: "(Lang&Lit) What is the term for a word that sounds like its meaning (e.g., 'buzz')?", a: "Onomatopoeia", options: ["Simile", "Metaphor", "Alliteration"] },
+            { q: "(I&S) Which ancient civilization is famous for building the pyramids?", a: "Egyptians", options: ["Romans", "Greeks", "Mayans"] },
+            { q: "(I&S) What is the capital city of Australia?", a: "Canberra", options: ["Sydney", "Melbourne", "Perth"] },
+            { q: "(PHE) In standard basketball, how many points is a free throw worth?", a: "1", options: ["2", "3", "0"] },
+            { q: "(Music) How many strings does a standard acoustic guitar have?", a: "6", options: ["4", "5", "7"] },
+            { q: "(Art) Which of the following are the primary colors?", a: "Red, Blue, Yellow", options: ["Green, Orange, Purple", "Black, White, Grey", "Red, Green, Blue"] },
+
+            // Fun General Knowledge / HK Context
+            { q: "Which iconic, green, exploding mob is famously found in the game Minecraft?", a: "Creeper", options: ["Zombie", "Enderman", "Skeleton"] },
+            { q: "What historic green and white transport ferries people across Victoria Harbour?", a: "Star Ferry", options: ["MTR", "Peak Tram", "Ding Ding (Tram)"] },
+            { q: "What is the traditional Cantonese style of bite-sized food served in small steamer baskets?", a: "Dim Sum", options: ["Sushi", "Pho", "Curry Fishballs"] },
+            { q: "What is the name of the highest mountain peak in Hong Kong?", a: "Tai Mo Shan", options: ["Victoria Peak", "Lantau Peak", "Lion Rock"] },
+            { q: "In Pokémon, what elemental type is Pikachu?", a: "Electric", options: ["Fire", "Water", "Grass"] },
+            { q: "What is the popular HK dessert made of sweet egg mixture in a pastry crust?", a: "Egg Tart", options: ["Pineapple Bun", "Waffle", "Mooncake"] },
+            { q: "Which video game company created the Switch console?", a: "Nintendo", options: ["Sony", "Microsoft", "Sega"] },
+            { q: "What color is the MTR Island Line (running from Kennedy Town to Chai Wan)?", a: "Blue", options: ["Red", "Green", "Orange"] },
+            { q: "What popular superhero is often known as the 'Caped Crusader'?", a: "Batman", options: ["Superman", "Spider-Man", "Iron Man"] },
+            { q: "Which block is virtually unbreakable in standard Minecraft survival mode?", a: "Bedrock", options: ["Obsidian", "Diamond Block", "Crying Obsidian"] }
+        ];
+
+        // --- GAME ENGINE SETUP ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Dynamic sizing
+        const MAP_SIZE = 19;
+        let TILE_SIZE = 30;
+        
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Calculate tile size based on container
+            TILE_SIZE = Math.floor(containerWidth / MAP_SIZE);
+            
+            canvas.width = TILE_SIZE * MAP_SIZE;
+            canvas.height = TILE_SIZE * MAP_SIZE;
+            
+            // Update player radius based on tile size
+            player.radius = TILE_SIZE * 0.4;
+            
+            // Redraw if not playing
+            if (state !== 'PLAYING') {
+                draw();
+            }
+        }
+
+        // UI Elements
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const livesDisplay = document.getElementById('livesDisplay');
+        const questionText = document.getElementById('questionText');
+        const optA = document.getElementById('optA');
+        const optB = document.getElementById('optB');
+        const optC = document.getElementById('optC');
+        const optD = document.getElementById('optD');
+        const overlay = document.getElementById('gameOverlay');
+        const feedbackOverlay = document.getElementById('feedbackOverlay');
+        const feedbackText = document.getElementById('feedbackText');
+        const feedbackSubtext = document.getElementById('feedbackSubtext');
+
+        // 0 = Wall, 1 = Path
+        const map = [
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0],
+            [0,1,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,1,0],
+            [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,1,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,1,0],
+            [0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0],
+            [0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,0],
+            [0,0,0,0,1,0,1,1,1,1,1,1,1,0,1,0,0,0,0],
+            [0,1,1,1,1,1,1,0,0,1,0,0,1,1,1,1,1,1,0],
+            [0,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0],
+            [0,0,0,0,1,0,1,1,1,1,1,1,1,0,1,0,0,0,0],
+            [0,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,0],
+            [0,1,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,1,0],
+            [0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0],
+            [0,0,1,0,1,0,1,0,0,0,0,0,1,0,1,0,1,0,0],
+            [0,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,0],
+            [0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0],
+            [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        ];
+
+        // --- GAME STATE ---
+        let state = 'MENU';
+        let score = 0;
+        let lives = 3;
+        let animationId;
+        let currentQuestion = null;
+        let correctAnswerLetter = '';
+        let availableQuestions = [...questionsPool];
+        
+        let pacMouthOpen = 0;
+        let pacMouthDir = 1;
+
+        // Map Corner locations for A, B, C, D
+        const answerCorners = {
+            'A': {x: 1, y: 1, color: '#ef4444'},
+            'B': {x: 17, y: 1, color: '#3b82f6'},
+            'C': {x: 1, y: 17, color: '#22c55e'},
+            'D': {x: 17, y: 17, color: '#eab308'}
+        };
+
+        const player = {
+            x: 0, y: 0, 
+            gridX: 9, gridY: 15,
+            dir: {x: 0, y: 0},
+            nextDir: {x: 0, y: 0},
+            speed: 3,
+            radius: 12
+        };
+
+        class Ghost {
+            constructor(gridX, gridY, color, behavior) {
+                this.startGridX = gridX;
+                this.startGridY = gridY;
+                this.gridX = gridX;
+                this.gridY = gridY;
+                this.x = gridX * TILE_SIZE;
+                this.y = gridY * TILE_SIZE;
+                this.color = color;
+                this.behavior = behavior;
+                this.dir = {x: 1, y: 0};
+                this.speed = 2;
+            }
+
+            reset() {
+                this.gridX = this.startGridX;
+                this.gridY = this.startGridY;
+                this.x = this.gridX * TILE_SIZE;
+                this.y = this.gridY * TILE_SIZE;
+                this.dir = {x: 0, y: 0};
+            }
+        }
+
+        const ghosts = [
+            new Ghost(9, 8, '#ef4444', 'chase'),
+            new Ghost(8, 8, '#ec4899', 'random'),
+            new Ghost(10, 8, '#06b6d4', 'random')
+        ];
+
+        function isWall(gx, gy) {
+            if(gx < 0 || gx >= MAP_SIZE || gy < 0 || gy >= MAP_SIZE) return true;
+            return map[gy][gx] === 0;
+        }
+
+        function isAtCenter(px, py) {
+            return px % TILE_SIZE === 0 && py % TILE_SIZE === 0;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function loadNextQuestion() {
+            if(availableQuestions.length === 0) {
+                availableQuestions = [...questionsPool];
+            }
+            
+            const qIndex = Math.floor(Math.random() * availableQuestions.length);
+            currentQuestion = availableQuestions.splice(qIndex, 1)[0];
+
+            const options = [currentQuestion.a, ...currentQuestion.options];
+            shuffleArray(options);
+
+            questionText.innerText = currentQuestion.q;
+            optA.innerText = options[0];
+            optB.innerText = options[1];
+            optC.innerText = options[2];
+            optD.innerText = options[3];
+
+            if(options[0] === currentQuestion.a) correctAnswerLetter = 'A';
+            else if(options[1] === currentQuestion.a) correctAnswerLetter = 'B';
+            else if(options[2] === currentQuestion.a) correctAnswerLetter = 'C';
+            else if(options[3] === currentQuestion.a) correctAnswerLetter = 'D';
+
+            resetPositions();
+            state = 'PLAYING';
+        }
+
+        function resetPositions() {
+            player.x = 9 * TILE_SIZE;
+            player.y = 15 * TILE_SIZE;
+            player.dir = {x: 0, y: 0};
+            player.nextDir = {x: 0, y: 0};
+            
+            ghosts.forEach(g => g.reset());
+            ghosts.forEach(g => {
+                const moves = [{x:1,y:0}, {x:-1,y:0}, {x:0,y:1}, {x:0,y:-1}].filter(m => !isWall(g.gridX + m.x, g.gridY + m.y));
+                if(moves.length > 0) g.dir = moves[Math.floor(Math.random() * moves.length)];
+            });
+        }
+
+        function update() {
+            if (state !== 'PLAYING') return;
+
+            // --- Player Movement ---
+            if (isAtCenter(player.x, player.y)) {
+                player.gridX = player.x / TILE_SIZE;
+                player.gridY = player.y / TILE_SIZE;
+
+                if (player.nextDir.x !== 0 || player.nextDir.y !== 0) {
+                    if (!isWall(player.gridX + player.nextDir.x, player.gridY + player.nextDir.y)) {
+                        player.dir = { ...player.nextDir };
+                    }
+                }
+                
+                if (isWall(player.gridX + player.dir.x, player.gridY + player.dir.y)) {
+                    player.dir = {x: 0, y: 0};
+                }
+            }
+
+            player.x += player.dir.x * player.speed;
+            player.y += player.dir.y * player.speed;
+
+            // --- Ghost Movement ---
+            ghosts.forEach(ghost => {
+                if (isAtCenter(ghost.x, ghost.y)) {
+                    ghost.gridX = ghost.x / TILE_SIZE;
+                    ghost.gridY = ghost.y / TILE_SIZE;
+
+                    let possibleMoves = [];
+                    const dirs = [{x:0,y:-1}, {x:1,y:0}, {x:0,y:1}, {x:-1,y:0}];
+                    
+                    dirs.forEach(d => {
+                        if (d.x === -ghost.dir.x && d.y === -ghost.dir.y && ghost.dir.x !== 0 && ghost.dir.y !== 0) return;
+                        if (!isWall(ghost.gridX + d.x, ghost.gridY + d.y)) {
+                            possibleMoves.push(d);
+                        }
+                    });
+
+                    if (possibleMoves.length === 0) {
+                        possibleMoves.push({x: -ghost.dir.x, y: -ghost.dir.y});
+                    }
+
+                    if (ghost.behavior === 'chase' && possibleMoves.length > 1) {
+                        let bestMove = possibleMoves[0];
+                        let minDist = Infinity;
+                        possibleMoves.forEach(m => {
+                            const nx = ghost.gridX + m.x;
+                            const ny = ghost.gridY + m.y;
+                            const dist = Math.abs(nx - (player.x/TILE_SIZE)) + Math.abs(ny - (player.y/TILE_SIZE));
+                            if (dist < minDist) {
+                                minDist = dist;
+                                bestMove = m;
+                            }
+                        });
+                        ghost.dir = bestMove;
+                    } else {
+                        ghost.dir = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                    }
+                }
+                ghost.x += ghost.dir.x * ghost.speed;
+                ghost.y += ghost.dir.y * ghost.speed;
+            });
+
+            checkCollisions();
+            
+            pacMouthOpen += 0.05 * pacMouthDir;
+            if (pacMouthOpen >= 0.25 || pacMouthOpen <= 0) pacMouthDir *= -1;
+        }
+
+        function checkCollisions() {
+            for(let ghost of ghosts) {
+                const dist = Math.hypot(player.x - ghost.x, player.y - ghost.y);
+                if (dist < TILE_SIZE * 0.8) {
+                    handleLifeLost("Caught by a Teacher!");
+                    return;
+                }
+            }
+
+            for (let letter in answerCorners) {
+                const corner = answerCorners[letter];
+                const cx = corner.x * TILE_SIZE;
+                const cy = corner.y * TILE_SIZE;
+                
+                if (Math.abs(player.x - cx) < TILE_SIZE/3 && Math.abs(player.y - cy) < TILE_SIZE/3) {
+                    if (letter === correctAnswerLetter) {
+                        handleCorrectAnswer();
+                    } else {
+                        handleLifeLost(`Wrong! Correct was ${correctAnswerLetter}`);
+                    }
+                    return;
+                }
+            }
+        }
+
+        function handleCorrectAnswer() {
+            state = 'TRANSITION';
+            score += 10;
+            scoreDisplay.innerText = score;
+            
+            showFeedback("CORRECT!", `+10 Points!`, 'text-green-400');
+            
+            setTimeout(() => {
+                hideFeedback();
+                loadNextQuestion();
+            }, 1500);
+        }
+
+        function handleLifeLost(msg) {
+            state = 'TRANSITION';
+            lives--;
+            livesDisplay.innerText = lives;
+            
+            if (lives > 0) {
+                showFeedback("OUCH!", msg, 'text-red-400');
+                setTimeout(() => {
+                    hideFeedback();
+                    resetPositions();
+                    state = 'PLAYING';
+                }, 2000);
+            } else {
+                showFeedback("GAME OVER", `Final Score: ${score}`, 'text-red-500');
+                setTimeout(() => {
+                    hideFeedback();
+                    document.getElementById('overlayTitle').innerText = "GAME OVER";
+                    document.getElementById('overlayMessage').innerText = `You scored ${score} points.\nReady to try again?`;
+                    document.getElementById('startBtn').innerText = "RESTART";
+                    overlay.classList.remove('hidden');
+                    state = 'MENU';
+                }, 2000);
+            }
+        }
+
+        function showFeedback(title, sub, colorClass) {
+            feedbackText.innerText = title;
+            feedbackText.className = `arcade-font text-2xl md:text-3xl mb-2 ${colorClass}`;
+            feedbackSubtext.innerText = sub;
+            feedbackSubtext.className = `responsive-text font-semibold text-white`;
+            feedbackOverlay.classList.remove('hidden');
+            feedbackOverlay.classList.add('flex');
+        }
+
+        function hideFeedback() {
+            feedbackOverlay.classList.add('hidden');
+            feedbackOverlay.classList.remove('flex');
+        }
+
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Map
+            for (let r = 0; r < MAP_SIZE; r++) {
+                for (let c = 0; c < MAP_SIZE; c++) {
+                    if (map[r][c] === 0) {
+                        ctx.fillStyle = '#1e3a8a';
+                        ctx.strokeStyle = '#3b82f6';
+                        ctx.lineWidth = Math.max(1, TILE_SIZE / 15);
+                        
+                        const padding = Math.max(1, TILE_SIZE / 30);
+                        ctx.fillRect(c * TILE_SIZE + padding, r * TILE_SIZE + padding, TILE_SIZE - padding*2, TILE_SIZE - padding*2);
+                        ctx.strokeRect(c * TILE_SIZE + padding, r * TILE_SIZE + padding, TILE_SIZE - padding*2, TILE_SIZE - padding*2);
+                    }
+                }
+            }
+
+            // Draw Answer Blocks
+            const fontSize = Math.max(10, Math.floor(TILE_SIZE * 0.5));
+            ctx.font = `${fontSize}px "Press Start 2P"`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for (let letter in answerCorners) {
+                const corner = answerCorners[letter];
+                ctx.fillStyle = corner.color;
+                
+                const padding = Math.max(2, TILE_SIZE / 15);
+                ctx.fillRect(corner.x * TILE_SIZE + padding, corner.y * TILE_SIZE + padding, TILE_SIZE - padding*2, TILE_SIZE - padding*2);
+                
+                ctx.fillStyle = letter === 'D' ? '#000' : '#fff';
+                ctx.fillText(letter, corner.x * TILE_SIZE + TILE_SIZE/2, corner.y * TILE_SIZE + TILE_SIZE/2 + 2);
+            }
+
+            // Draw Ghosts
+            ghosts.forEach(ghost => {
+                ctx.fillStyle = ghost.color;
+                const gx = ghost.x + TILE_SIZE/2;
+                const gy = ghost.y + TILE_SIZE/2;
+                const r = TILE_SIZE * 0.45;
+                
+                ctx.beginPath();
+                ctx.arc(gx, gy, r, Math.PI, 0);
+                ctx.lineTo(gx + r, gy + r);
+                
+                ctx.lineTo(gx + r*0.33, gy + r - r*0.15);
+                ctx.lineTo(gx - r*0.33, gy + r);
+                ctx.lineTo(gx - r, gy + r - r*0.15);
+                
+                ctx.closePath();
+                ctx.fill();
+
+                // Eyes
+                const eyeSize = Math.max(2, TILE_SIZE * 0.1);
+                const pupilSize = Math.max(1, TILE_SIZE * 0.05);
+                
+                ctx.fillStyle = 'white';
+                ctx.beginPath(); ctx.arc(gx - r*0.3, gy - r*0.15, eyeSize, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(gx + r*0.3, gy - r*0.15, eyeSize, 0, Math.PI*2); ctx.fill();
+                
+                ctx.fillStyle = 'blue';
+                const px = ghost.dir.x * eyeSize * 0.5;
+                const py = ghost.dir.y * eyeSize * 0.5;
+                ctx.beginPath(); ctx.arc(gx - r*0.3 + px, gy - r*0.15 + py, pupilSize, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(gx + r*0.3 + px, gy - r*0.15 + py, pupilSize, 0, Math.PI*2); ctx.fill();
+            });
+
+            // Draw Player (Pac-Man)
+            if (state !== 'GAME_OVER') {
+                const px = player.x + TILE_SIZE/2;
+                const py = player.y + TILE_SIZE/2;
+                let angle = 0;
+                
+                if (player.dir.x === 1) angle = 0;
+                else if (player.dir.x === -1) angle = Math.PI;
+                else if (player.dir.y === 1) angle = Math.PI/2;
+                else if (player.dir.y === -1) angle = -Math.PI/2;
+                else if (player.nextDir.x === 1) angle = 0;
+                else if (player.nextDir.x === -1) angle = Math.PI;
+                
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.rotate(angle);
+                
+                ctx.fillStyle = '#fde047';
+                ctx.beginPath();
+                ctx.arc(0, 0, player.radius, pacMouthOpen * Math.PI, (2 - pacMouthOpen) * Math.PI);
+                ctx.lineTo(0, 0);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Setup Controls
+        function setDirection(dx, dy) {
+            if (state !== 'PLAYING') return;
+            player.nextDir = {x: dx, y: dy};
+        }
+
+        // Keyboard - Fixed WASD support
+        window.addEventListener('keydown', (e) => {
+            // Prevent default scrolling for arrows and WASD
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","KeyW","KeyS","KeyA","KeyD"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+            
+            switch(e.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    setDirection(0, -1);
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    setDirection(0, 1);
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    setDirection(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    setDirection(1, 0);
+                    break;
+            }
+        });
+
+        // Mobile D-Pad Buttons
+        document.getElementById('btnUp').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(0, -1); });
+        document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(0, 1); });
+        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(-1, 0); });
+        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(1, 0); });
+        
+        document.getElementById('btnUp').addEventListener('mousedown', () => setDirection(0, -1));
+        document.getElementById('btnDown').addEventListener('mousedown', () => setDirection(0, 1));
+        document.getElementById('btnLeft').addEventListener('mousedown', () => setDirection(-1, 0));
+        document.getElementById('btnRight').addEventListener('mousedown', () => setDirection(1, 0));
+
+        // Touch Swipe Logic
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: false});
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, {passive: false});
+
+        canvas.addEventListener('touchend', (e) => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        });
+
+        function handleSwipe(startX, startY, endX, endY) {
+            let dx = endX - startX;
+            let dy = endY - startY;
+            
+            if(Math.abs(dx) > 30 || Math.abs(dy) > 30) {
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx > 0) setDirection(1, 0);
+                    else setDirection(-1, 0);
+                } else {
+                    if (dy > 0) setDirection(0, 1);
+                    else setDirection(0, -1);
+                }
+            }
+        }
+
+        // Start Game
+        document.getElementById('startBtn').addEventListener('click', () => {
+            score = 0;
+            lives = 3;
+            scoreDisplay.innerText = score;
+            livesDisplay.innerText = lives;
+            availableQuestions = [...questionsPool];
+            
+            overlay.classList.add('hidden');
+            loadNextQuestion();
+            
+            if(!animationId) gameLoop();
+        });
+
+        // Resize handler
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Initial setup
+        resizeCanvas();
+        draw();
+
+    </script>
+</body>
+</html>
