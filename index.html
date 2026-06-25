@@ -73,6 +73,76 @@
         .dpad-btn:active {
             background-color: rgba(255, 255, 255, 0.3);
         }
+        .settings-btn {
+            background-color: rgba(56, 189, 248, 0.2);
+            border: 2px solid rgba(56, 189, 248, 0.5);
+            border-radius: 8px;
+            color: #38bdf8;
+            padding: 4px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .settings-btn:hover {
+            background-color: rgba(56, 189, 248, 0.4);
+        }
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background-color: #475569;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .toggle-switch.active {
+            background-color: #22c55e;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+        .difficulty-btn {
+            padding: 8px 16px;
+            border: 2px solid;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .difficulty-btn.easy {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+        .difficulty-btn.easy.active {
+            background-color: #22c55e;
+            color: white;
+        }
+        .difficulty-btn.medium {
+            border-color: #eab308;
+            color: #eab308;
+        }
+        .difficulty-btn.medium.active {
+            background-color: #eab308;
+            color: white;
+        }
+        .difficulty-btn.hard {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        .difficulty-btn.hard.active {
+            background-color: #ef4444;
+            color: white;
+        }
         /* Responsive text sizing */
         .responsive-title {
             font-size: clamp(0.75rem, 2.5vw, 1.25rem);
@@ -88,9 +158,10 @@
 <body class="flex flex-col items-center py-2 px-2 md:py-4 md:px-4">
 
     <div class="w-full max-w-4xl flex justify-between items-center mb-2 md:mb-4 shrink-0">
-        <div>
+        <div class="flex items-center gap-3">
             <h1 class="responsive-title text-sky-400">MYP Maze Chase</h1>
-            <p class="responsive-small text-slate-400 hidden md:block">Collect the right answer, avoid the ghosts!</p>
+            <button id="settingsBtn" class="settings-btn responsive-small">⚙ Settings</button>
+            <button id="pauseBtn" class="settings-btn responsive-small hidden">⏸ Pause</button>
         </div>
         <div class="text-right arcade-font responsive-small text-yellow-300 flex space-x-4 md:space-x-6">
             <div>SCORE: <span id="scoreDisplay">0</span></div>
@@ -132,9 +203,58 @@
             <!-- Start/Game Over Overlay -->
             <div id="gameOverlay" class="overlay">
                 <h2 id="overlayTitle" class="arcade-font text-xl md:text-3xl text-yellow-400 mb-2 md:mb-4 tracking-wider">MAZE CHASE</h2>
+                
+                <!-- Difficulty Selection -->
+                <div class="mb-4">
+                    <p class="responsive-small text-slate-300 mb-2">Select Difficulty:</p>
+                    <div class="flex gap-2 justify-center">
+                        <button class="difficulty-btn easy active responsive-small" data-diff="easy">EASY</button>
+                        <button class="difficulty-btn medium responsive-small" data-diff="medium">MEDIUM</button>
+                        <button class="difficulty-btn hard responsive-small" data-diff="hard">HARD</button>
+                    </div>
+                </div>
+
+                <!-- Question Type Toggle -->
+                <div class="mb-4 flex items-center gap-3">
+                    <span class="responsive-small text-slate-300">Fun Questions:</span>
+                    <div class="toggle-switch" id="funQuestionsToggle"></div>
+                </div>
+
                 <p id="overlayMessage" class="responsive-small mb-4 md:mb-6 px-4">Use Arrow Keys or Swipe to move.<br>Find the correct answer block!<br>Watch out for wandering teachers!</p>
                 <button id="startBtn" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
                     START GAME
+                </button>
+            </div>
+
+            <!-- Settings Overlay -->
+            <div id="settingsOverlay" class="overlay hidden">
+                <h2 class="arcade-font text-xl md:text-2xl text-sky-400 mb-4">SETTINGS</h2>
+                
+                <div class="mb-4">
+                    <p class="responsive-small text-slate-300 mb-2">Difficulty:</p>
+                    <div class="flex gap-2 justify-center">
+                        <button class="difficulty-btn easy responsive-small" data-diff="easy">EASY</button>
+                        <button class="difficulty-btn medium responsive-small" data-diff="medium">MEDIUM</button>
+                        <button class="difficulty-btn hard responsive-small" data-diff="hard">HARD</button>
+                    </div>
+                </div>
+
+                <div class="mb-4 flex items-center gap-3">
+                    <span class="responsive-small text-slate-300">Fun Questions:</span>
+                    <div class="toggle-switch" id="settingsFunToggle"></div>
+                </div>
+
+                <button id="closeSettingsBtn" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs mt-4">
+                    CLOSE
+                </button>
+            </div>
+
+            <!-- Pause Overlay -->
+            <div id="pauseOverlay" class="overlay hidden">
+                <h2 class="arcade-font text-2xl md:text-3xl text-yellow-400 mb-4">PAUSED</h2>
+                <p class="responsive-small mb-4 text-slate-300">Press P or click Resume to continue</p>
+                <button id="resumeBtn" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-full shadow-lg transform transition hover:scale-105 arcade-font text-xs">
+                    RESUME
                 </button>
             </div>
 
@@ -158,78 +278,86 @@
     </div>
 
     <script>
-        // --- DATA: Questions Library (Expanded to 40 questions) ---
-        const questionsPool = [
-            // Design / DT
-            { q: "What is the very first stage of the MYP Design Cycle?", a: "Inquiring & Analyzing", options: ["Developing Ideas", "Creating the Solution", "Evaluating"] },
-            { q: "Which hand tool is best used to safely cut a straight line in wood?", a: "Tenon Saw", options: ["Coping Saw", "Hammer", "Screwdriver"] },
-            { q: "In Digital Design, what does 'CAD' stand for?", a: "Computer-Aided Design", options: ["Central Art Drawing", "Computer And Data", "Creative Art Design"] },
-            { q: "During the 'Evaluating' phase of Design, what must you test your product against?", a: "Design Specification", options: ["Your friend's opinion", "The teacher's grade", "A random guess"] },
-            { q: "Which of the following materials is a thermoplastic (can be reheated and reshaped)?", a: "Acrylic", options: ["Wood", "Cardboard", "Concrete"] },
-            { q: "What is the name of a machine that builds 3D models layer by layer from a CAD file?", a: "3D Printer", options: ["Laser Cutter", "Vacuum Former", "Band Saw"] },
-            { q: "Which wood joint involves cutting interlocking 'fingers'?", a: "Finger Joint", options: ["Butt Joint", "Dovetail Joint", "Mitre Joint"] },
-            { q: "What does 'CAM' stand for in manufacturing?", a: "Computer-Aided Manufacturing", options: ["Central Auto Machine", "Core Art Maker", "Computer And Math"] },
-            { q: "In the Design Cycle, what step follows 'Inquiring & Analyzing'?", a: "Developing Ideas", options: ["Creating the Solution", "Evaluating", "Testing"] },
-            { q: "Which is a fundamental safety rule in the workshop?", a: "Wear safety goggles", options: ["Run to your desk", "Leave machines running", "Eat while cutting"] },
-            { q: "What type of manufactured board is made by gluing thin layers of wood together?", a: "Plywood", options: ["MDF", "Pine", "Oak"] },
-            { q: "What is a 'prototype' in the design process?", a: "A working model", options: ["A final product", "A sketch", "A type of plastic"] },
-            { q: "Which of these materials is an excellent conductor of electricity?", a: "Copper", options: ["Plastic", "Wood", "Rubber"] },
-            { q: "What is the main purpose of a 'Design Brief'?", a: "State the problem to solve", options: ["List the final cost", "Draw the product", "Evaluate the design"] },
-            { q: "MDF is a common workshop material. What does it stand for?", a: "Medium Density Fibreboard", options: ["Multi-Design Format", "Modern Durable Fabric", "Mega Dense Foam"] },
-            
-            // MYP Subjects
-            { q: "(Science) What part of an animal cell is known as the 'powerhouse'?", a: "Mitochondria", options: ["Nucleus", "Cell Wall", "Cytoplasm"] },
-            { q: "(Math) If a rectangle has a length of 6cm and a width of 4cm, what is its area?", a: "24 cm²", options: ["10 cm²", "20 cm²", "12 cm²"] },
-            { q: "(Lang&Lit) 'The stars danced playfully in the moonlit sky' is an example of...", a: "Personification", options: ["Simile", "Metaphor", "Onomatopoeia"] },
-            { q: "(I&S) Which imaginary lines run horizontally across a world map?", a: "Latitude", options: ["Longitude", "Equator only", "Meridians"] },
-            { q: "(Science) What state of matter has a fixed volume but takes the shape of its container?", a: "Liquid", options: ["Solid", "Gas", "Plasma"] },
-            { q: "(Math) Solve for x:  2x + 5 = 15", a: "5", options: ["10", "4", "20"] },
-            { q: "(Math) What is the next prime number after 7?", a: "11", options: ["9", "8", "13"] },
-            { q: "(Science) What gas do plants absorb during photosynthesis?", a: "Carbon Dioxide", options: ["Oxygen", "Nitrogen", "Hydrogen"] },
-            { q: "(Science) What is the chemical formula for water?", a: "H2O", options: ["CO2", "O2", "NaCl"] },
-            { q: "(Lang&Lit) What is the term for a word that sounds like its meaning (e.g., 'buzz')?", a: "Onomatopoeia", options: ["Simile", "Metaphor", "Alliteration"] },
-            { q: "(I&S) Which ancient civilization is famous for building the pyramids?", a: "Egyptians", options: ["Romans", "Greeks", "Mayans"] },
-            { q: "(I&S) What is the capital city of Australia?", a: "Canberra", options: ["Sydney", "Melbourne", "Perth"] },
-            { q: "(PHE) In standard basketball, how many points is a free throw worth?", a: "1", options: ["2", "3", "0"] },
-            { q: "(Music) How many strings does a standard acoustic guitar have?", a: "6", options: ["4", "5", "7"] },
-            { q: "(Art) Which of the following are the primary colors?", a: "Red, Blue, Yellow", options: ["Green, Orange, Purple", "Black, White, Grey", "Red, Green, Blue"] },
-
-            // Fun General Knowledge / HK Context
-            { q: "Which iconic, green, exploding mob is famously found in the game Minecraft?", a: "Creeper", options: ["Zombie", "Enderman", "Skeleton"] },
-            { q: "What historic green and white transport ferries people across Victoria Harbour?", a: "Star Ferry", options: ["MTR", "Peak Tram", "Ding Ding (Tram)"] },
-            { q: "What is the traditional Cantonese style of bite-sized food served in small steamer baskets?", a: "Dim Sum", options: ["Sushi", "Pho", "Curry Fishballs"] },
-            { q: "What is the name of the highest mountain peak in Hong Kong?", a: "Tai Mo Shan", options: ["Victoria Peak", "Lantau Peak", "Lion Rock"] },
-            { q: "In Pokémon, what elemental type is Pikachu?", a: "Electric", options: ["Fire", "Water", "Grass"] },
-            { q: "What is the popular HK dessert made of sweet egg mixture in a pastry crust?", a: "Egg Tart", options: ["Pineapple Bun", "Waffle", "Mooncake"] },
-            { q: "Which video game company created the Switch console?", a: "Nintendo", options: ["Sony", "Microsoft", "Sega"] },
-            { q: "What color is the MTR Island Line (running from Kennedy Town to Chai Wan)?", a: "Blue", options: ["Red", "Green", "Orange"] },
-            { q: "What popular superhero is often known as the 'Caped Crusader'?", a: "Batman", options: ["Superman", "Spider-Man", "Iron Man"] },
-            { q: "Which block is virtually unbreakable in standard Minecraft survival mode?", a: "Bedrock", options: ["Obsidian", "Diamond Block", "Crying Obsidian"] }
-        ];
+        // --- DATA: Questions Library ---
+        const allQuestions = {
+            myp: [
+                // Design / DT
+                { q: "What is the very first stage of the MYP Design Cycle?", a: "Inquiring & Analyzing", options: ["Developing Ideas", "Creating the Solution", "Evaluating"] },
+                { q: "Which hand tool is best used to safely cut a straight line in wood?", a: "Tenon Saw", options: ["Coping Saw", "Hammer", "Screwdriver"] },
+                { q: "In Digital Design, what does 'CAD' stand for?", a: "Computer-Aided Design", options: ["Central Art Drawing", "Computer And Data", "Creative Art Design"] },
+                { q: "During the 'Evaluating' phase of Design, what must you test your product against?", a: "Design Specification", options: ["Your friend's opinion", "The teacher's grade", "A random guess"] },
+                { q: "Which of the following materials is a thermoplastic?", a: "Acrylic", options: ["Wood", "Cardboard", "Concrete"] },
+                { q: "What is the name of a machine that builds 3D models layer by layer?", a: "3D Printer", options: ["Laser Cutter", "Vacuum Former", "Band Saw"] },
+                { q: "Which wood joint involves cutting interlocking 'fingers'?", a: "Finger Joint", options: ["Butt Joint", "Dovetail Joint", "Mitre Joint"] },
+                { q: "What does 'CAM' stand for in manufacturing?", a: "Computer-Aided Manufacturing", options: ["Central Auto Machine", "Core Art Maker", "Computer And Math"] },
+                { q: "In the Design Cycle, what step follows 'Inquiring & Analyzing'?", a: "Developing Ideas", options: ["Creating the Solution", "Evaluating", "Testing"] },
+                { q: "Which is a fundamental safety rule in the workshop?", a: "Wear safety goggles", options: ["Run to your desk", "Leave machines running", "Eat while cutting"] },
+                { q: "What type of manufactured board is made by gluing thin layers of wood?", a: "Plywood", options: ["MDF", "Pine", "Oak"] },
+                { q: "What is a 'prototype' in the design process?", a: "A working model", options: ["A final product", "A sketch", "A type of plastic"] },
+                { q: "Which of these materials is an excellent conductor of electricity?", a: "Copper", options: ["Plastic", "Wood", "Rubber"] },
+                { q: "What is the main purpose of a 'Design Brief'?", a: "State the problem to solve", options: ["List the final cost", "Draw the product", "Evaluate the design"] },
+                { q: "MDF is a common workshop material. What does it stand for?", a: "Medium Density Fibreboard", options: ["Multi-Design Format", "Modern Durable Fabric", "Mega Dense Foam"] },
+                // MYP Subjects
+                { q: "(Science) What part of an animal cell is known as the 'powerhouse'?", a: "Mitochondria", options: ["Nucleus", "Cell Wall", "Cytoplasm"] },
+                { q: "(Math) If a rectangle has length 6cm and width 4cm, what is its area?", a: "24 cm²", options: ["10 cm²", "20 cm²", "12 cm²"] },
+                { q: "(Lang&Lit) 'The stars danced playfully' is an example of...", a: "Personification", options: ["Simile", "Metaphor", "Onomatopoeia"] },
+                { q: "(I&S) Which imaginary lines run horizontally across a world map?", a: "Latitude", options: ["Longitude", "Equator only", "Meridians"] },
+                { q: "(Science) What state of matter has fixed volume but takes container shape?", a: "Liquid", options: ["Solid", "Gas", "Plasma"] },
+                { q: "(Math) Solve for x: 2x + 5 = 15", a: "5", options: ["10", "4", "20"] },
+                { q: "(Math) What is the next prime number after 7?", a: "11", options: ["9", "8", "13"] },
+                { q: "(Science) What gas do plants absorb during photosynthesis?", a: "Carbon Dioxide", options: ["Oxygen", "Nitrogen", "Hydrogen"] },
+                { q: "(Science) What is the chemical formula for water?", a: "H2O", options: ["CO2", "O2", "NaCl"] },
+                { q: "(Lang&Lit) What is the term for a word that sounds like its meaning?", a: "Onomatopoeia", options: ["Simile", "Metaphor", "Alliteration"] },
+                { q: "(I&S) Which ancient civilization is famous for building the pyramids?", a: "Egyptians", options: ["Romans", "Greeks", "Mayans"] },
+                { q: "(I&S) What is the capital city of Australia?", a: "Canberra", options: ["Sydney", "Melbourne", "Perth"] },
+                { q: "(PHE) In standard basketball, how many points is a free throw worth?", a: "1", options: ["2", "3", "0"] },
+                { q: "(Music) How many strings does a standard acoustic guitar have?", a: "6", options: ["4", "5", "7"] },
+                { q: "(Art) Which of the following are the primary colors?", a: "Red, Blue, Yellow", options: ["Green, Orange, Purple", "Black, White, Grey", "Red, Green, Blue"] }
+            ],
+            fun: [
+                { q: "Which iconic, green, exploding mob is famously found in Minecraft?", a: "Creeper", options: ["Zombie", "Enderman", "Skeleton"] },
+                { q: "What historic green and white transport ferries people across Victoria Harbour?", a: "Star Ferry", options: ["MTR", "Peak Tram", "Ding Ding (Tram)"] },
+                { q: "What is the traditional Cantonese style of bite-sized food in steamer baskets?", a: "Dim Sum", options: ["Sushi", "Pho", "Curry Fishballs"] },
+                { q: "What is the name of the highest mountain peak in Hong Kong?", a: "Tai Mo Shan", options: ["Victoria Peak", "Lantau Peak", "Lion Rock"] },
+                { q: "In Pokémon, what elemental type is Pikachu?", a: "Electric", options: ["Fire", "Water", "Grass"] },
+                { q: "What is the popular HK dessert made of sweet egg mixture in pastry crust?", a: "Egg Tart", options: ["Pineapple Bun", "Waffle", "Mooncake"] },
+                { q: "Which video game company created the Switch console?", a: "Nintendo", options: ["Sony", "Microsoft", "Sega"] },
+                { q: "What color is the MTR Island Line?", a: "Blue", options: ["Red", "Green", "Orange"] },
+                { q: "What popular superhero is often known as the 'Caped Crusader'?", a: "Batman", options: ["Superman", "Spider-Man", "Iron Man"] },
+                { q: "Which block is virtually unbreakable in standard Minecraft survival?", a: "Bedrock", options: ["Obsidian", "Diamond Block", "Crying Obsidian"] }
+            ]
+        };
 
         // --- GAME ENGINE SETUP ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Dynamic sizing
         const MAP_SIZE = 19;
         let TILE_SIZE = 30;
+        
+        // Settings
+        let currentDifficulty = 'easy';
+        let funQuestionsEnabled = false;
+        let questionsPool = [];
+        
+        // Difficulty settings
+        const difficultySettings = {
+            easy: { ghostSpeed: 1.5, playerSpeed: 4, ghostCount: 2, lives: 5 },
+            medium: { ghostSpeed: 2, playerSpeed: 3, ghostCount: 3, lives: 3 },
+            hard: { ghostSpeed: 2.5, playerSpeed: 3, ghostCount: 4, lives: 2 }
+        };
         
         function resizeCanvas() {
             const container = document.getElementById('game-container');
             const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
             
-            // Calculate tile size based on container
             TILE_SIZE = Math.floor(containerWidth / MAP_SIZE);
             
             canvas.width = TILE_SIZE * MAP_SIZE;
             canvas.height = TILE_SIZE * MAP_SIZE;
             
-            // Update player radius based on tile size
             player.radius = TILE_SIZE * 0.4;
             
-            // Redraw if not playing
             if (state !== 'PLAYING') {
                 draw();
             }
@@ -244,11 +372,15 @@
         const optC = document.getElementById('optC');
         const optD = document.getElementById('optD');
         const overlay = document.getElementById('gameOverlay');
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const pauseOverlay = document.getElementById('pauseOverlay');
         const feedbackOverlay = document.getElementById('feedbackOverlay');
         const feedbackText = document.getElementById('feedbackText');
         const feedbackSubtext = document.getElementById('feedbackSubtext');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
 
-        // 0 = Wall, 1 = Path
+        // Map
         const map = [
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
             [0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0],
@@ -278,12 +410,11 @@
         let animationId;
         let currentQuestion = null;
         let correctAnswerLetter = '';
-        let availableQuestions = [...questionsPool];
+        let availableQuestions = [];
         
         let pacMouthOpen = 0;
         let pacMouthDir = 1;
 
-        // Map Corner locations for A, B, C, D
         const answerCorners = {
             'A': {x: 1, y: 1, color: '#ef4444'},
             'B': {x: 17, y: 1, color: '#3b82f6'},
@@ -323,11 +454,20 @@
             }
         }
 
-        const ghosts = [
-            new Ghost(9, 8, '#ef4444', 'chase'),
-            new Ghost(8, 8, '#ec4899', 'random'),
-            new Ghost(10, 8, '#06b6d4', 'random')
-        ];
+        let ghosts = [];
+
+        function initGhosts() {
+            const settings = difficultySettings[currentDifficulty];
+            const ghostColors = ['#ef4444', '#ec4899', '#06b6d4', '#a855f7'];
+            const ghostBehaviors = ['chase', 'random', 'random', 'chase'];
+            
+            ghosts = [];
+            for (let i = 0; i < settings.ghostCount; i++) {
+                const gx = 8 + (i % 2);
+                const gy = 8 + Math.floor(i / 2);
+                ghosts.push(new Ghost(gx, gy, ghostColors[i], ghostBehaviors[i]));
+            }
+        }
 
         function isWall(gx, gy) {
             if(gx < 0 || gx >= MAP_SIZE || gy < 0 || gy >= MAP_SIZE) return true;
@@ -346,9 +486,18 @@
             return array;
         }
 
+        function buildQuestionsPool() {
+            questionsPool = [...allQuestions.myp];
+            if (funQuestionsEnabled) {
+                questionsPool = questionsPool.concat(allQuestions.fun);
+            }
+            shuffleArray(questionsPool);
+        }
+
         function loadNextQuestion() {
             if(availableQuestions.length === 0) {
                 availableQuestions = [...questionsPool];
+                shuffleArray(availableQuestions);
             }
             
             const qIndex = Math.floor(Math.random() * availableQuestions.length);
@@ -373,12 +522,19 @@
         }
 
         function resetPositions() {
+            const settings = difficultySettings[currentDifficulty];
+            
             player.x = 9 * TILE_SIZE;
             player.y = 15 * TILE_SIZE;
             player.dir = {x: 0, y: 0};
             player.nextDir = {x: 0, y: 0};
+            player.speed = settings.playerSpeed;
             
-            ghosts.forEach(g => g.reset());
+            ghosts.forEach(g => {
+                g.reset();
+                g.speed = settings.ghostSpeed;
+            });
+            
             ghosts.forEach(g => {
                 const moves = [{x:1,y:0}, {x:-1,y:0}, {x:0,y:1}, {x:0,y:-1}].filter(m => !isWall(g.gridX + m.x, g.gridY + m.y));
                 if(moves.length > 0) g.dir = moves[Math.floor(Math.random() * moves.length)];
@@ -388,7 +544,7 @@
         function update() {
             if (state !== 'PLAYING') return;
 
-            // --- Player Movement ---
+            // Player Movement
             if (isAtCenter(player.x, player.y)) {
                 player.gridX = player.x / TILE_SIZE;
                 player.gridY = player.y / TILE_SIZE;
@@ -407,7 +563,7 @@
             player.x += player.dir.x * player.speed;
             player.y += player.dir.y * player.speed;
 
-            // --- Ghost Movement ---
+            // Ghost Movement
             ghosts.forEach(ghost => {
                 if (isAtCenter(ghost.x, ghost.y)) {
                     ghost.gridX = ghost.x / TILE_SIZE;
@@ -481,10 +637,10 @@
 
         function handleCorrectAnswer() {
             state = 'TRANSITION';
-            score += 10;
+            score += 10 * (currentDifficulty === 'easy' ? 1 : currentDifficulty === 'medium' ? 2 : 3);
             scoreDisplay.innerText = score;
             
-            showFeedback("CORRECT!", `+10 Points!`, 'text-green-400');
+            showFeedback("CORRECT!", `+${10 * (currentDifficulty === 'easy' ? 1 : currentDifficulty === 'medium' ? 2 : 3)} Points!`, 'text-green-400');
             
             setTimeout(() => {
                 hideFeedback();
@@ -512,6 +668,8 @@
                     document.getElementById('overlayMessage').innerText = `You scored ${score} points.\nReady to try again?`;
                     document.getElementById('startBtn').innerText = "RESTART";
                     overlay.classList.remove('hidden');
+                    pauseBtn.classList.add('hidden');
+                    settingsBtn.classList.remove('hidden');
                     state = 'MENU';
                 }, 2000);
             }
@@ -529,6 +687,18 @@
         function hideFeedback() {
             feedbackOverlay.classList.add('hidden');
             feedbackOverlay.classList.remove('flex');
+        }
+
+        function togglePause() {
+            if (state === 'PLAYING') {
+                state = 'PAUSED';
+                pauseOverlay.classList.remove('hidden');
+                pauseOverlay.classList.add('flex');
+            } else if (state === 'PAUSED') {
+                state = 'PLAYING';
+                pauseOverlay.classList.add('hidden');
+                pauseOverlay.classList.remove('flex');
+            }
         }
 
         function draw() {
@@ -600,7 +770,7 @@
                 ctx.beginPath(); ctx.arc(gx + r*0.3 + px, gy - r*0.15 + py, pupilSize, 0, Math.PI*2); ctx.fill();
             });
 
-            // Draw Player (Pac-Man)
+            // Draw Player
             if (state !== 'GAME_OVER') {
                 const px = player.x + TILE_SIZE/2;
                 const py = player.y + TILE_SIZE/2;
@@ -632,17 +802,21 @@
             animationId = requestAnimationFrame(gameLoop);
         }
 
-        // Setup Controls
+        // Controls
         function setDirection(dx, dy) {
             if (state !== 'PLAYING') return;
             player.nextDir = {x: dx, y: dy};
         }
 
-        // Keyboard - Fixed WASD support
+        // Keyboard
         window.addEventListener('keydown', (e) => {
-            // Prevent default scrolling for arrows and WASD
-            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","KeyW","KeyS","KeyA","KeyD"].indexOf(e.code) > -1) {
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," ","KeyW","KeyS","KeyA","KeyD","KeyP"].indexOf(e.code) > -1) {
                 e.preventDefault();
+            }
+            
+            if (e.code === 'KeyP') {
+                togglePause();
+                return;
             }
             
             switch(e.code) {
@@ -665,7 +839,7 @@
             }
         });
 
-        // Mobile D-Pad Buttons
+        // Mobile D-Pad
         document.getElementById('btnUp').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(0, -1); });
         document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(0, 1); });
         document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(-1, 0); });
@@ -676,7 +850,7 @@
         document.getElementById('btnLeft').addEventListener('mousedown', () => setDirection(-1, 0));
         document.getElementById('btnRight').addEventListener('mousedown', () => setDirection(1, 0));
 
-        // Touch Swipe Logic
+        // Touch Swipe
         let touchStartX = 0;
         let touchStartY = 0;
         
@@ -710,15 +884,59 @@
             }
         }
 
+        // Difficulty Selection
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentDifficulty = btn.dataset.diff;
+            });
+        });
+
+        // Toggle Switches
+        function toggleFunQuestions() {
+            funQuestionsEnabled = !funQuestionsEnabled;
+            document.getElementById('funQuestionsToggle').classList.toggle('active', funQuestionsEnabled);
+            document.getElementById('settingsFunToggle').classList.toggle('active', funQuestionsEnabled);
+        }
+
+        document.getElementById('funQuestionsToggle').addEventListener('click', toggleFunQuestions);
+        document.getElementById('settingsFunToggle').addEventListener('click', toggleFunQuestions);
+
+        // Settings Button
+        settingsBtn.addEventListener('click', () => {
+            settingsOverlay.classList.remove('hidden');
+            settingsOverlay.classList.add('flex');
+        });
+
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+            settingsOverlay.classList.add('hidden');
+            settingsOverlay.classList.remove('flex');
+        });
+
+        // Pause Button
+        pauseBtn.addEventListener('click', togglePause);
+        document.getElementById('resumeBtn').addEventListener('click', togglePause);
+
         // Start Game
         document.getElementById('startBtn').addEventListener('click', () => {
+            const settings = difficultySettings[currentDifficulty];
+            
             score = 0;
-            lives = 3;
+            lives = settings.lives;
             scoreDisplay.innerText = score;
             livesDisplay.innerText = lives;
+            
+            buildQuestionsPool();
             availableQuestions = [...questionsPool];
+            shuffleArray(availableQuestions);
+            
+            initGhosts();
             
             overlay.classList.add('hidden');
+            settingsBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            
             loadNextQuestion();
             
             if(!animationId) gameLoop();
